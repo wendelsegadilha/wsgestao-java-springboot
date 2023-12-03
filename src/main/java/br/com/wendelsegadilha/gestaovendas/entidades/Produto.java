@@ -1,6 +1,10 @@
 package br.com.wendelsegadilha.gestaovendas.entidades;
 
+import org.hibernate.validator.constraints.Length;
+
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -13,17 +17,25 @@ public class Produto {
     @Column(name = "codigo")
     private Long codigo;
     @Column(name = "descricao")
+    @NotBlank(message = "Descrição")
+    @Length(min = 3, max = 100, message = "Descrição")
     private String descricao;
+
     @Column(name = "quantidade")
+    @NotNull(message = "Quantidade")
     private Integer quantidade;
     @Column(name = "preco_custo")
+    @NotNull(message = "Preço de custo")
     private BigDecimal precoCusto;
     @Column(name = "preco_venda")
+    @NotNull(message = "Preço de venda")
     private BigDecimal precoVenda;
+    @Length(max = 500, message = "Observação")
     @Column(name = "observacao")
     private String observacao;
     @ManyToOne
     @JoinColumn(name = "codigo_categoria", referencedColumnName = "codigo")
+    @NotNull(message = "Código categoria")
     private Categoria categoria;
 
     public Long getCodigo() {

@@ -1,5 +1,6 @@
 package br.com.wendelsegadilha.gestaovendas.excecao;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,16 @@ import java.util.List;
 public class TratadorExcecaoGlobal extends ResponseEntityExceptionHandler {
 
     public static final String CONSTANTE_VALIDACAO_NOT_BLANK = "NotBlank";
+    public static final String CONSTANTE_VALIDACAO_NOT_NULL = "NotNull";
+    public static final String CONSTANTE_VALIDACAO_LENGTH = "Length";
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
+        String msgUsuario = "Recurso não encontrdo";
+        String msgDesenvolvedor = ex.getMessage();
+        List<Erro> erros = List.of(new Erro(msgUsuario, msgDesenvolvedor));
+        return handleExceptionInternal(ex, erros, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
 
     @ExceptionHandler(EmptyResultDataAccessException.class)
     public ResponseEntity<Object> handleEmptyResultDataAccessException(EmptyResultDataAccessException ex, WebRequest request) {
@@ -60,7 +71,10 @@ public class TratadorExcecaoGlobal extends ResponseEntityExceptionHandler {
         if (fieldError.getCode().equals(CONSTANTE_VALIDACAO_NOT_BLANK)){
             return fieldError.getDefaultMessage().concat(" é obrigatório.");
         }
-        if (fieldError.getCode().equals("Length")){
+        if (fieldError.getCode().equals(CONSTANTE_VALIDACAO_NOT_NULL)){
+            return fieldError.getDefaultMessage().concat(" é obrigatório.");
+        }
+        if (fieldError.getCode().equals(CONSTANTE_VALIDACAO_LENGTH)){
             Object[] arguments = fieldError.getArguments();
             return fieldError.getDefaultMessage().concat(String.format(" deve ter entre %s e %s caracteres.", arguments[2], arguments[1]));
         }
