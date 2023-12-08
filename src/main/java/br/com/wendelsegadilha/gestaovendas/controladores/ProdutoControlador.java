@@ -1,5 +1,7 @@
 package br.com.wendelsegadilha.gestaovendas.controladores;
 
+import br.com.wendelsegadilha.gestaovendas.dto.produto.ProdutoRequestDTO;
+import br.com.wendelsegadilha.gestaovendas.dto.produto.ProdutoResponseDTO;
 import br.com.wendelsegadilha.gestaovendas.entidades.Produto;
 import br.com.wendelsegadilha.gestaovendas.servicos.ProdutoServico;
 import io.swagger.annotations.Api;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Api(tags = "Produto")
 @RestController
@@ -22,29 +25,30 @@ public class ProdutoControlador {
     private ProdutoServico produtoServico;
     @ApiOperation(value = "Listar todos por categoria")
     @GetMapping
-    public List<Produto> listarTodos(@PathVariable Long codigoCategoria) {
-        return produtoServico.listarTodos(codigoCategoria);
+    public List<ProdutoResponseDTO> listarTodos(@PathVariable Long codigoCategoria) {
+        var produtos = produtoServico.listarTodos(codigoCategoria);
+        return produtos.stream().map(produto -> ProdutoResponseDTO.converteParaProdutoDTO(produto)).collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Listar por código de produto e de categoria")
     @GetMapping("/{codigoProduto}")
-    public ResponseEntity<Optional<Produto>> buscarPorCodigo(@PathVariable Long codigoCategoria, @PathVariable Long codigoProduto) {
+    public ResponseEntity<ProdutoResponseDTO> buscarPorCodigo(@PathVariable Long codigoCategoria, @PathVariable Long codigoProduto) {
         Optional<Produto> produto = produtoServico.buscarPorCodigo(codigoProduto, codigoCategoria);
-        return produto.isPresent() ? ResponseEntity.ok(produto) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return produto.isPresent() ? ResponseEntity.ok(ProdutoResponseDTO.converteParaProdutoDTO(produto.get())) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @ApiOperation(value = "Salvar")
     @PostMapping
-    public ResponseEntity<Produto> salvar(@PathVariable Long codigoCategoria, @Valid @RequestBody Produto produto) {
-        produto = produtoServico.salvar(codigoCategoria,produto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(produto);
+    public ResponseEntity<ProdutoResponseDTO> salvar(@PathVariable Long codigoCategoria, @Valid @RequestBody ProdutoRequestDTO produtoDTO) {
+        var produto = produtoServico.salvar(codigoCategoria, produtoDTO.converteParaProduto(codigoCategoria));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ProdutoResponseDTO.converteParaProdutoDTO(produto));
     }
 
     @ApiOperation(value = "Atualizar")
     @PutMapping("/{codigoProduto}")
-    public ResponseEntity<Produto> salvar(@PathVariable Long codigoCategoria, @PathVariable Long codigoProduto, @Valid @RequestBody Produto produto) {
-        produto = produtoServico.atualizar(codigoCategoria, codigoProduto, produto);
-        return ResponseEntity.ok(produto);
+    public ResponseEntity<ProdutoResponseDTO> salvar(@PathVariable Long codigoCategoria, @PathVariable Long codigoProduto, @Valid @RequestBody ProdutoRequestDTO produtoDTO) {
+        var produto = produtoServico.atualizar(codigoCategoria, codigoProduto, produtoDTO.converteParaProduto(codigoCategoria, codigoProduto));
+        return ResponseEntity.ok(ProdutoResponseDTO.converteParaProdutoDTO(produto));
     }
 
     @ApiOperation(value = "Excluir")

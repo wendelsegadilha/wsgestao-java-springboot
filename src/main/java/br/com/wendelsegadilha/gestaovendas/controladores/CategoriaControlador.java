@@ -1,5 +1,7 @@
 package br.com.wendelsegadilha.gestaovendas.controladores;
 
+import br.com.wendelsegadilha.gestaovendas.dto.categoria.CategoriaRequestDTO;
+import br.com.wendelsegadilha.gestaovendas.dto.categoria.CategoriaResponseDTO;
 import br.com.wendelsegadilha.gestaovendas.entidades.Categoria;
 import br.com.wendelsegadilha.gestaovendas.servicos.CategoriaServico;
 import io.swagger.annotations.Api;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Api(tags = "Categoria")
 @RestController
@@ -23,29 +26,31 @@ public class CategoriaControlador {
 
     @ApiOperation(value = "Listar todas")
     @GetMapping
-    public List<Categoria> listarTodas() {
-        return categoriaServico.listarTodas();
+    public List<CategoriaResponseDTO> listarTodas() {
+        List<CategoriaResponseDTO> categorias = categoriaServico.listarTodas().stream().map(categoria ->
+                CategoriaResponseDTO.converterParaCategoriaDTO(categoria)).collect(Collectors.toList());
+        return categorias;
     }
 
     @ApiOperation(value = "Listar por código ")
     @GetMapping("/{codigo}")
-    public ResponseEntity<Optional<Categoria>> buscarPorCodigo(@PathVariable Long codigo) {
+    public ResponseEntity<CategoriaResponseDTO> buscarPorCodigo(@PathVariable Long codigo) {
         Optional<Categoria> categoria = categoriaServico.buscarPorCodigo(codigo);
-        return categoria.isPresent() ? ResponseEntity.ok(categoria) : ResponseEntity.notFound().build();
+        return categoria.isPresent() ? ResponseEntity.ok(CategoriaResponseDTO.converterParaCategoriaDTO(categoria.get())) : ResponseEntity.notFound().build();
     }
 
     @ApiOperation(value = "Salvar")
     @PostMapping
-    public ResponseEntity<Categoria> salvar(@Valid @RequestBody Categoria categoria) {
-        categoria = categoriaServico.salvar(categoria);
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoria);
+    public ResponseEntity<CategoriaResponseDTO> salvar(@Valid @RequestBody CategoriaRequestDTO categoriaDTO) {
+        var categoria = categoriaServico.salvar(categoriaDTO.converteParaCategoria());
+        return ResponseEntity.status(HttpStatus.CREATED).body(CategoriaResponseDTO.converterParaCategoriaDTO(categoria));
     }
 
     @ApiOperation(value = "Atualizar")
     @PutMapping("/{codigo}")
-    public ResponseEntity<Categoria> atualizar(@PathVariable Long codigo, @Valid @RequestBody Categoria categoria) {
-        categoria = categoriaServico.atualizar(codigo, categoria);
-        return ResponseEntity.ok(categoria);
+    public ResponseEntity<CategoriaResponseDTO> atualizar(@PathVariable Long codigo, @Valid @RequestBody CategoriaRequestDTO categoriaDTO) {
+        var categoria = categoriaServico.atualizar(codigo, categoriaDTO.converteParaCategoria(codigo));
+        return ResponseEntity.ok(CategoriaResponseDTO.converterParaCategoriaDTO(categoria));
     }
 
     @ApiOperation(value = "Exluir")
